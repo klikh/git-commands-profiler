@@ -1,11 +1,14 @@
 package com.jetbrains.idea.git.profiler
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,39 +19,65 @@ import git4idea.commands.GitSimpleHandler
 import java.awt.datatransfer.StringSelection
 
 class TestGitFetchAction : AnAction() {
-  private val RUNS = 10
+  private val NOTIFICATION_GROUP = "git.commands.profiler"
 
   override fun actionPerformed(event: AnActionEvent) {
-    val msg = "Start $RUNS `git fetch` consequent processes to measure the average duration of the operation?"
-    val an = Messages.showOkCancelDialog(msg, "Git Fetch Duration Test", "Start", "Cancel", Messages.getQuestionIcon())
-    if (an == Messages.OK) start(event.project!!)
+    val project = event.project!!
+    val msg = "Start several `git fetch` consequent processes to measure the average duration of the operation?"
+    val validator = object : InputValidator {
+      override fun checkInput(s: String?): Boolean {
+        return isInt(s)
+      }
+
+      private fun isInt(s: String?): Boolean {
+        try {
+          s!!.toInt()
+          return true;
+        } catch (e: NumberFormatException) {
+          return false;
+        }
+      }
+
+      override fun canClose(s: String?): Boolean {
+        return checkInput(s)
+      }
+
+    }
+    val runs = Messages.showInputDialog(project, msg, "Git Fetch Duration Test", Messages.getQuestionIcon(), "100", validator)
+    if (runs != null) {
+      start(project, runs.toInt())
+    }
   }
 
-  private fun start(project: Project) {
+  private fun start(project: Project, runs: Int) {
     val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)!!)
     val results = MultiMap<VirtualFile, Long>()
-    object : Task.Modal(project, "Fetching", true){
+    object : Task.Backgroundable(project, "Fetching", true) {
       override fun run(pi: ProgressIndicator) {
-        // cold fetch
+        pi.text2 = "First cold fetch...";
         for (root in roots) {
           fetch(project, root)
         }
 
-        for (run in 1..RUNS) {
-          pi.fraction = run / RUNS.toDouble()
+        for (run in 1..runs) {
           for (root in roots) {
+            pi.text2 = "Fetching #$run in ${root.name}..."
             results.putValue(root, fetch(project, root))
           }
+          pi.fraction = run / runs.toDouble()
         }
       }
-    }.queue()
 
-    val text = calculate(results)
-    CopyPasteManager.getInstance().setContents(StringSelection(text))
-    Messages.showInfoMessage(text, "Git Fetch Results")
+      override fun onSuccess() {
+        val text = calculate(results, runs)
+        CopyPasteManager.getInstance().setContents(StringSelection(text))
+        Notification(NOTIFICATION_GROUP, "Git Fetch Duration Results", text, NotificationType.INFORMATION)
+                .notify(project)
+      }
+    }.queue()
   }
 
-  private fun calculate(results: MultiMap<VirtualFile, Long>): String {
+  private fun calculate(results: MultiMap<VirtualFile, Long>, runs: Int): String {
     val calculated = hashMapOf<VirtualFile, Long>()
     for (root in results.keySet()) {
       val rootResults = results.get(root).sorted()
@@ -57,8 +86,7 @@ class TestGitFetchAction : AnAction() {
       val filtered = rootResults.subList(perc10, size - perc10)
       calculated.put(root, filtered.sum() / filtered.size)
     }
-
-    return "Fetch was called $RUNS times in ${calculated.size} roots\n" +
+    return "Fetch was called $runs times in ${calculated.size} roots\n" +
             "Average times without the first cold fetch and 10/90 percentile:\n" +
             calculated.entries.joinToString("\n") { "${it.key.name}: ${it.value} ms" } +
             "\nThis text has been copied to the clipboard";
