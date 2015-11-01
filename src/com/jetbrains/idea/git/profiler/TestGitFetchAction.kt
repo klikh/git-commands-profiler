@@ -4,7 +4,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -17,7 +16,6 @@ import com.intellij.util.containers.MultiMap
 import git4idea.GitVcs
 import git4idea.commands.GitCommand
 import git4idea.commands.GitSimpleHandler
-import java.awt.datatransfer.StringSelection
 
 class TestGitFetchAction : AnAction() {
   private val NOTIFICATION_GROUP = "git.commands.profiler"
@@ -53,7 +51,6 @@ class TestGitFetchAction : AnAction() {
 
       override fun onSuccess() {
         val text = calculate(results, runs)
-        CopyPasteManager.getInstance().setContents(StringSelection(text))
         Notification(NOTIFICATION_GROUP, "Git Fetch Duration Results", text, NotificationType.INFORMATION)
                 .notify(project)
       }
@@ -71,8 +68,7 @@ class TestGitFetchAction : AnAction() {
     }
     return "Fetch was called $runs times in ${calculated.size} ${StringUtil.pluralize("root", calculated.size)}<br/>" +
             "Average times without the first cold fetch and 10/90 percentiles:<br/>" +
-            calculated.entries.joinToString("<br/>") { "${it.key.name}: ${it.value} ms" } +
-            "\nThis text has been copied to the clipboard";
+            calculated.entries.joinToString("<br/>") { "${it.key.name}: ${it.value} ms" }
   }
 
   private fun fetch(project: Project, root: VirtualFile) : Long {
