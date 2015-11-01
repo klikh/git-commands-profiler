@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
@@ -23,27 +24,9 @@ class TestGitFetchAction : AnAction() {
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project!!
-    val msg = "Start several `git fetch` consequent processes to measure the average duration of the operation?"
-    val validator = object : InputValidator {
-      override fun checkInput(s: String?): Boolean {
-        return isInt(s)
-      }
-
-      private fun isInt(s: String?): Boolean {
-        try {
-          s!!.toInt()
-          return true;
-        } catch (e: NumberFormatException) {
-          return false;
-        }
-      }
-
-      override fun canClose(s: String?): Boolean {
-        return checkInput(s)
-      }
-
-    }
-    val runs = Messages.showInputDialog(project, msg, "Git Fetch Duration Test", Messages.getQuestionIcon(), "100", validator)
+    val msg = "How many consecutive runs of `git fetch` do you want to perform?"
+    val runs = Messages.showInputDialog(project, msg, "Git Fetch Duration Test",
+               Messages.getQuestionIcon(), "100", INT_VALIDATOR)
     if (runs != null) {
       start(project, runs.toInt())
     }
@@ -86,9 +69,9 @@ class TestGitFetchAction : AnAction() {
       val filtered = rootResults.subList(perc10, size - perc10)
       calculated.put(root, filtered.sum() / filtered.size)
     }
-    return "Fetch was called $runs times in ${calculated.size} roots\n" +
-            "Average times without the first cold fetch and 10/90 percentile:\n" +
-            calculated.entries.joinToString("\n") { "${it.key.name}: ${it.value} ms" } +
+    return "Fetch was called $runs times in ${calculated.size} ${StringUtil.pluralize("root", calculated.size)}<br/>" +
+            "Average times without the first cold fetch and 10/90 percentiles:<br/>" +
+            calculated.entries.joinToString("<br/>") { "${it.key.name}: ${it.value} ms" } +
             "\nThis text has been copied to the clipboard";
   }
 
@@ -98,5 +81,24 @@ class TestGitFetchAction : AnAction() {
     gh.runInCurrentThread{}
     val end = System.currentTimeMillis()
     return end - start
+  }
+
+  val INT_VALIDATOR = object : InputValidator {
+    override fun checkInput(s: String?): Boolean {
+      return isInt(s)
+    }
+
+    override fun canClose(s: String?): Boolean {
+      return checkInput(s)
+    }
+
+    private fun isInt(s: String?): Boolean {
+      try {
+        s!!.toInt()
+        return true;
+      } catch (e: NumberFormatException) {
+        return false;
+      }
+    }
   }
 }
