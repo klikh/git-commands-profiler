@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-RUNS = 10
+RUNS = 100
 HOME = Dir.pwd
 #REPOS = [ ".", "community", "contrib", "CIDR", "community/android", "community/android/tools-base" ]
 REPOS = `find . -type d -name '.git' -maxdepth 6`.gsub("/.git", "").gsub("./", "").split
