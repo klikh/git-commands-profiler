@@ -1,8 +1,11 @@
 <idea-plugin version="2">
-  <id>com.jetbrains.idea.plugin.git.profiler</id>
-  <name>Git Command Profiler</name>
+  <id>com.jetbrains.idea.plugin.git.commands.profiler</id>
+  <name>Git Commands Profiler</name>
   <version>0.1</version>
-  <vendor url="http://">JetBrains</vendor>
+  <vendor url="https://github.com/klikh/git-commands-profiler">klikh</vendor>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>Git4Idea</depends>
 
   <description><![CDATA[
       Enter short description for your plugin here.<br>
