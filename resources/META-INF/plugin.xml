@@ -1,0 +1,36 @@
+<idea-plugin version="2">
+  <id>com.jetbrains.idea.plugin.git.profiler</id>
+  <name>Git Command Profiler</name>
+  <version>0.1</version>
+  <vendor url="http://">JetBrains</vendor>
+
+  <description><![CDATA[
+      Enter short description for your plugin here.<br>
+      <em>most HTML tags may be used</em>
+    ]]></description>
+
+  <change-notes><![CDATA[
+      Add change notes here.<br>
+      <em>most HTML tags may be used</em>
+    ]]>
+  </change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <action class="com.jetbrains.idea.git.profiler.TestGitFetchAction" id="git.profiler.test.git.fetch" text="Test Git Fetch">
+      <add-to-group group-id="Internal"/>
+    </action>
+  </actions>
+
+</idea-plugin>
