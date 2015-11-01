@@ -58,7 +58,7 @@ class TestGitFetchAction : AnAction() {
       calculated.put(root, filtered.sum() / filtered.size)
     }
 
-    return "Fetch was called $RUNS times in ${calculated.size()} roots\n" +
+    return "Fetch was called $RUNS times in ${calculated.size} roots\n" +
             "Average times without the first cold fetch and 10/90 percentile:\n" +
             calculated.entries.joinToString("\n") { "${it.key.name}: ${it.value} ms" } +
             "\nThis text has been copied to the clipboard";
